@@ -4,7 +4,7 @@
 #define SENDER_TXD_PIN 12
 #define RECEIVER_RXD_PIN 13
 
-const int BOARD = 1;
+const int device = 1;
 const int intervalSerial = 50;
 
 unsigned long packages = 0;
@@ -28,7 +28,7 @@ void setup()
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
   delay(200);
-  Serial.println("BOARD:" + String(BOARD));
+  Serial.println("Info: Device: " + String(device));
   Serial.println("");
 }
 
@@ -45,7 +45,7 @@ void sendDataBySerial()
   if ((currentmillis - previousSerialMillis) > intervalSerial)
   {
     packages++;
-    payload = "{\"message\":\"senda data\",\"packages\":\"" + String(packages) + "\",\"board\":\"" + String(BOARD) + "\"}~";
+    payload = "{\"message\":\"send data\",\"packages\":\"" + String(packages) + "\",\"device\":\"" + String(device) + "\"}~";
     serialSend.print(payload);
     previousSerialMillis = currentmillis;
   }
@@ -80,6 +80,10 @@ void receiveDataBySerial()
     if (!validateJsonFromReceivedDataSerial(serialData))
     {
       serialData = "";
+      jsonSerialReceived.clear();
+      digitalWrite(BUILTIN_LED, HIGH);
+      delay(10000);
+      digitalWrite(BUILTIN_LED, LOW);
       return;
     }
 
@@ -87,10 +91,11 @@ void receiveDataBySerial()
 
     String message = jsonSerialReceived["message"];
     String packages = jsonSerialReceived["packages"];
+    String device = jsonSerialReceived["device"];
 
     Serial.println("Info: message => " + message);
     Serial.println("Info: packages => " + packages);
-    Serial.println("Info: board => " + packages);
+    Serial.println("Info: device => " + device);
     serialData = "";
   }
 }
@@ -116,12 +121,13 @@ bool validateJsonFromReceivedDataSerial(String serialData)
   if (jsonSerialReceived["packages"].isNull())
     return false;
 
-  if (jsonSerialReceived["board"] == String(BOARD))
+  if (jsonSerialReceived["device"].isNull())
+    return false;
+
+  if (jsonSerialReceived["device"] == String(device))
   {
-    digitalWrite(BUILTIN_LED, HIGH);
-    delay(10000);
-    digitalWrite(BUILTIN_LED, LOW);
     return false;
   }
+
   return true;
 }
