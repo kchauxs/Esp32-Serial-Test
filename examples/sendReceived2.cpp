@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-#define SENDER_TXD_PIN  13
-#define RECEIVER_RXD_PIN  12
-#define DEVICE  2
+#define SENDER_TXD_PIN 13
+#define RECEIVER_RXD_PIN 12
+#define DEVICE 2
 
 const int intervalSerial = 100;
 unsigned long packages = 0;
