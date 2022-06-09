@@ -3,8 +3,8 @@
 
 #define SENDER_TXD_PIN 12   // 13
 #define RECEIVER_RXD_PIN 13 // 12
+#define DEVICE 1            // 2
 
-const int device = 1; // 2
 const int intervalSerial = 100;
 unsigned long packages = 0;
 unsigned long previousSerialMillis = 0;
@@ -93,7 +93,7 @@ bool validateJsonFromReceivedDataSerial(String serialData)
   if (jsonSerialReceived["device"].isNull())
     return false;
 
-  if (jsonSerialReceived["device"] == device)
+  if (jsonSerialReceived["device"] == DEVICE)
     return false;
 
   return true;
@@ -111,7 +111,7 @@ void sendDataBySerial()
     DynamicJsonDocument jsonSerialSend(2048);
     jsonSerialSend["message"] = "dummy message";
     jsonSerialSend["packages"] = packages;
-    jsonSerialSend["device"] = device;
+    jsonSerialSend["device"] = DEVICE;
     serializeJson(jsonSerialSend, toSend);
 
     toSend += '~';
@@ -127,7 +127,7 @@ void setup()
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
   delay(200);
-  Serial.println("Info: Device: " + String(device));
+  Serial.println("Info: Device: " + String(DEVICE));
   Serial.println("");
 }
 
