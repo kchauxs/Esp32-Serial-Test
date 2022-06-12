@@ -6,22 +6,31 @@
 #define DEVICE 1            // 2
 
 const int intervalSerial = 100;
-unsigned long packages = 0;
+unsigned long package = 0;
 unsigned long previousSerialMillis = 0;
 
 String serialData;
 HardwareSerial serialSend(1);
 DynamicJsonDocument jsonSerialReceived(1024);
 
-bool readSerail();
+bool readSerail(String &serialData);
 void receiveDataBySerial();
 void sendDataBySerial();
+void turnOnLed(int pin, int time = 5000);
 bool validateDataSerialReceived(String serialData);
 bool validateJsonFromReceivedDataSerial(String serialData);
 
-bool readSerail()
+void turnOnLed(int pin, int time)
+{
+  digitalWrite(pin, HIGH);
+  delay(time);
+  digitalWrite(pin, LOW);
+}
+
+bool readSerail(String &serialData)
 {
   bool isReceivedBySerial = false;
+  serialData = "";
 
   while (serialSend.available())
   {
@@ -35,38 +44,34 @@ bool readSerail()
       serialData += String(character);
     }
   }
-
   return isReceivedBySerial;
 }
 
 void receiveDataBySerial()
 {
-  serialData = "";
+  if (!readSerail(serialData))
+    return;
 
-  if (readSerail())
+  if (!validateDataSerialReceived(serialData))
+    return;
+
+  if (!validateJsonFromReceivedDataSerial(serialData))
   {
-    if (!validateDataSerialReceived(serialData))
-      return;
-
-    if (!validateJsonFromReceivedDataSerial(serialData))
-    {
-      jsonSerialReceived.clear();
-      digitalWrite(BUILTIN_LED, HIGH);
-      delay(10000);
-      digitalWrite(BUILTIN_LED, LOW);
-      return;
-    }
-
-    String message = jsonSerialReceived["message"];
-    String packages = jsonSerialReceived["packages"];
-    String device = jsonSerialReceived["device"];
-
-    Serial.println("");
-    Serial.println("Info: " + serialData);
-    Serial.println("Info: message => " + message);
-    Serial.println("Info: packages => " + packages);
-    Serial.println("Info: device => " + device);
+    jsonSerialReceived.clear();
+    turnOnLed(BUILTIN_LED);
+    return;
   }
+
+  String message = jsonSerialReceived["message"];
+  String package = jsonSerialReceived["package"];
+  String device = jsonSerialReceived["device"];
+  jsonSerialReceived.clear();
+
+  Serial.println("");
+  Serial.println("Info: " + serialData);
+  Serial.println("Info: message => " + message);
+  Serial.println("Info: package => " + package);
+  Serial.println("Info: device => " + device);
 }
 
 bool validateDataSerialReceived(String serialData)
@@ -87,7 +92,7 @@ bool validateJsonFromReceivedDataSerial(String serialData)
   if (jsonSerialReceived["message"].isNull())
     return false;
 
-  if (jsonSerialReceived["packages"].isNull())
+  if (jsonSerialReceived["package"].isNull())
     return false;
 
   if (jsonSerialReceived["device"].isNull())
@@ -105,12 +110,12 @@ void sendDataBySerial()
 
   if ((currentmillis - previousSerialMillis) > intervalSerial)
   {
-    packages++;
+    package++;
     String toSend = "";
 
     DynamicJsonDocument jsonSerialSend(2048);
     jsonSerialSend["message"] = "dummy message";
-    jsonSerialSend["packages"] = packages;
+    jsonSerialSend["package"] = package;
     jsonSerialSend["device"] = DEVICE;
     serializeJson(jsonSerialSend, toSend);
 
@@ -124,11 +129,12 @@ void setup()
 {
   Serial.begin(115200);
   serialSend.begin(115200, SERIAL_8N1, SENDER_TXD_PIN, RECEIVER_RXD_PIN);
+  delay(200);
+
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
-  delay(200);
-  Serial.println("Info: Device: " + String(DEVICE));
-  Serial.println("");
+
+  Serial.println("\nInfo: Device: " + String(DEVICE));
 }
 
 void loop()
