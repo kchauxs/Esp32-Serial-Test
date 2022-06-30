@@ -70,7 +70,7 @@ bool validateString(String serialData)
   return true;
 }
 
-bool validatvalidateJsonContenteJson(String serialData)
+bool validateJsonContent(String serialData)
 {
   deserializeJson(jsonSerialReceived, serialData);
 
